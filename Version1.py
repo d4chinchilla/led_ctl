@@ -3,71 +3,66 @@
 import time
 import board
 import neopixel
+import json
 
-
-# Data in for neopixels = D18
+# Neopixel setup
 pixel_pin = board.D18
-
-# The number of NeoPixels
-num_pixels = 30
-
-# The order of the pixel colors
+num_pixels = 25
 ORDER = neopixel.GRB
-
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.2, auto_write=False, pixel_order=ORDER)
 
+# Define pi
+pi = 3.14159265359
 
-def wheel(pos):
-    # Input a value 0 to 255 to get a color value.
-    # The colours are a transition r - g - b - back to r.
-    if pos < 0 or pos > 255:
-        r = g = b = 0
-    elif pos < 85:
-        r = int(pos * 3)
-        g = int(255 - pos*3)
-        b = 0
-    elif pos < 170:
-        pos -= 85
-        r = int(255 - pos*3)
-        g = 0
-        b = int(pos*3)
+# Declare Colour memory
+red = 1
+green = 0
+blue = 0
+
+# Declare position and offset on LED ring and offset signedness
+ring_pos = 0
+ring_offset = 0
+offset_sign = 0
+
+# Led ring code
+def led_ring(angle, amplitude):
+    ring_pos = round((angle * num_pixels) / (2 * pi))
+    ring_offset = ((angle * num_pixels) / (2 * pi)) - ring_pos
+
+    if ring_offset < 0:
+        offset_sign = -1
+    elif ring_offset > 0:
+        offset_sign = 1
     else:
-        pos -= 170
-        r = 0
-        g = int(pos*3)
-        b = int(255 - pos*3)
-    return (r, g, b) if ORDER == neopixel.RGB or ORDER == neopixel.GRB else (r, g, b, 0)
+        offset_sign = 0
 
+    ring_offset = abs(ring_offset)
 
-def rainbow_cycle(wait):
-    for j in range(255):
-        for i in range(num_pixels):
-            pixel_index = (i * 256 // num_pixels) + j
-            pixels[i] = wheel(pixel_index & 255)
+    for i in range(0, 256):
+        pixles[ring_pos + (-2 * offset_sign)] = (( (round(i * amplitude * red * (1 - ring_offset) / 3 )), (round(i * amplitude * green * (1 - ring_offset) / 3 )), (round(i * amplitude * blue * (1 - ring_offset) / 3 )) ))
+        pixles[ring_pos + (-1 * offset_sign)] = (( (round(i * amplitude * red * (2 - ring_offset) / 3 )), (round(i * amplitude * green * (2 - ring_offset) / 3 )), (round(i * amplitude * blue * (2 - ring_offset) / 3 )) ))
+        pixels[ring_pos + ( 0 * offset_sign)] = (( (round(i * amplitude * red * (3 - ring_offset) / 3 )), (round(i * amplitude * green * (3 - ring_offset) / 3 )), (round(i * amplitude * blue * (3 - ring_offset) / 3 )) ))
+        pixels[ring_pos + ( 1 * offset_sign)] = (( (round(i * amplitude * red * (2 + ring_offset) / 3 )), (round(i * amplitude * green * (2 + ring_offset) / 3 )), (round(i * amplitude * blue * (2 + ring_offset) / 3 )) ))
+        pixles[ring_pos + ( 2 * offset_sign)] = (( (round(i * amplitude * red * (1 + ring_offset) / 3 )), (round(i * amplitude * green * (1 + ring_offset) / 3 )), (round(i * amplitude * blue * (1 + ring_offset) / 3 )) ))
+        pixles[ring_pos + ( 3 * offset_sign)] = (( (round(i * amplitude * red * (0 + ring_offset) / 3 )), (round(i * amplitude * green * (0 + ring_offset) / 3 )), (round(i * amplitude * blue * (0 + ring_offset) / 3 )) ))
+
         pixels.show()
-        time.sleep(wait)
+        time.sleep(0.002)
 
+        if red == 1:
+            red = 0
+            green = 1
+            blue = 0
+        elif green == 1:
+            red = 0
+            green = 0
+            blue = 1
+        else:
+            red = 1
+            green = 0
+            blue = 0
 
+# Main loop
 while True:
-    # Comment this line out if you have RGBW/GRBW NeoPixels
-    pixels.fill((255, 0, 0))
-    # Uncomment this line if you have RGBW/GRBW NeoPixels
-    # pixels.fill((255, 0, 0, 0))
-    pixels.show()
-    time.sleep(1)
-
-    # Comment this line out if you have RGBW/GRBW NeoPixels
-    pixels.fill((0, 255, 0))
-    # Uncomment this line if you have RGBW/GRBW NeoPixels
-    # pixels.fill((0, 255, 0, 0))
-    pixels.show()
-    time.sleep(1)
-
-    # Comment this line out if you have RGBW/GRBW NeoPixels
-    pixels.fill((0, 0, 255))
-    # Uncomment this line if you have RGBW/GRBW NeoPixels
-    # pixels.fill((0, 0, 255, 0))
-    pixels.show()
-    time.sleep(1)
-
-    rainbow_cycle(0.001)    # rainbow cycle with 1ms delay per step
+        with open('/tmp/chinchilla-backend.json', 'r') as json_file:  
+                data = json.load(json_file)
