@@ -25,8 +25,12 @@ button.pull = digitalio.Pull.UP
 # Define pi
 pi = 3.14159265359
 
-# Declare id memory
+# Declare memory
 last_id = 0
+now_ms = 0
+last_ms = 0
+button_value = 0
+last_button = 0
 
 # Declare LED indices
 index_2 = 0
@@ -192,4 +196,15 @@ while True:
                 led_ring(angle, amplitude)
                 last_id = id
     
-    # calibration button = not button.value
+    # Button code
+    now_ms = int(time.time() * 1000)
+    button_value = not button.value
+    f = open('/tmp/chinchilla-led-ctl', 'w')
+    if (button_value and last_button = 0):
+        last_ms = now_ms
+    if (button_value and now_ms > last_ms + 2000 and last_button = 1):
+        f.write('reset')
+    elif (button_value and now_ms > last_ms + 50 and last_button = 1):
+        f.write('calibrate')
+    f.close()
+    last_button = button_value
