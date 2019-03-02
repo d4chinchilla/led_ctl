@@ -49,8 +49,8 @@ offset_sign = 0
 # LED ring code
 # _____________________________________________________________________________
 def led_ring(angle, amplitude):
-	
-	# Translate angle to LED number
+    
+    # Translate angle to LED number
     ring_pos = round((angle * num_pixels) / (2 * pi))
     ring_offset = ((angle * num_pixels) / (2 * pi)) - ring_pos
 
@@ -67,7 +67,7 @@ def led_ring(angle, amplitude):
     if (ring_pos + (-2 * offset_sign)) < 0:
         index_2 = ring_pos + (-2 * offset_sign) + num_pixels
     elif (ring_pos + (-2 * offset_sign)) >= num_pixels:
-        index_2 = ring_pos + (-2 * offset_sign) - num_pixels)
+        index_2 = ring_pos + (-2 * offset_sign) - num_pixels
     else:
         index_2 = ring_pos + (-2 * offset_sign)
     
@@ -84,7 +84,7 @@ def led_ring(angle, amplitude):
     if (ring_pos - offset_sign) < 0:
         index_1 = ring_pos - offset_sign + num_pixels
     elif (ring_pos - offset_sign) >= num_pixels:
-        index_1 = ring_pos - offset_sign - num_pixels)
+        index_1 = ring_pos - offset_sign - num_pixels
     else:
         index_1 = ring_pos - offset_sign
     
@@ -118,7 +118,7 @@ def led_ring(angle, amplitude):
     if (ring_pos + offset_sign) < 0:
         index1 = ring_pos + offset_sign + num_pixels
     elif (ring_pos + offset_sign) >= num_pixels:
-        index1 = ring_pos + offset_sign - num_pixels)
+        index1 = ring_pos + offset_sign - num_pixels
     else:
         index1 = ring_pos + offset_sign
     
@@ -135,7 +135,7 @@ def led_ring(angle, amplitude):
     if (ring_pos + (2 * offset_sign)) < 0:
         index2 = ring_pos + (2 * offset_sign) + num_pixels
     elif (ring_pos + (2 * offset_sign)) >= num_pixels:
-        index2 = ring_pos + (2 * offset_sign) - num_pixels)
+        index2 = ring_pos + (2 * offset_sign) - num_pixels
     else:
         index2 = ring_pos + (2 * offset_sign)
     
@@ -152,7 +152,7 @@ def led_ring(angle, amplitude):
     if (ring_pos + (3 * offset_sign)) < 0:
         index3 = ring_pos + (3 * offset_sign) + num_pixels
     elif (ring_pos + (3 * offset_sign)) >= num_pixels:
-        index3 = ring_pos + (3 * offset_sign) - num_pixels)
+        index3 = ring_pos + (3 * offset_sign) - num_pixels
     else:
         index3 = ring_pos + (3 * offset_sign)
     
@@ -171,8 +171,8 @@ def led_ring(angle, amplitude):
 # Main loop
 # _____________________________________________________________________________
 while True:
-	
-	# Fade LEDs out
+    
+    # Fade LEDs out
     for i in range(0, num_pixels):
         pixel = list(pixels[i])
         if pixel[0] > 0:
@@ -200,11 +200,12 @@ while True:
     now_ms = int(time.time() * 1000)
     button_value = not button.value
     f = open('/tmp/chinchilla-led-ctl', 'w')
-    if (button_value and last_button = 0):
+    if (button_value and last_button == 0):
         last_ms = now_ms
-    if (button_value and now_ms > last_ms + 2000 and last_button = 1):
+    if (button_value and now_ms > last_ms + 2000 and last_button == 1):
         f.write('reset')
-    elif (button_value and now_ms > last_ms + 50 and last_button = 1):
+    elif (button_value and now_ms > last_ms + 50 and last_button == 1):
         f.write('calibrate')
     f.close()
     last_button = button_value
+
