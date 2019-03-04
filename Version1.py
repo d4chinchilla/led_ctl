@@ -6,6 +6,7 @@ import board
 import neopixel
 import json
 import digitalio
+import ast
 from math import pi
 
 # Definitions
@@ -133,7 +134,7 @@ def sign(num):
 # Calculates LED RGB values based on angle and amplitude
 # Fades out as it goes round the ring up to the fanout value
 # _____________________________________________________________________________
-def led_ring(angle, amplitude):
+def led_ring(angle, amplitude, freq):
     
     # Translate angle to LED number
     ring_pos = round((angle * NUM_PIXELS) / (2 * pi))
@@ -154,15 +155,15 @@ def led_ring(angle, amplitude):
         # Calculate RGB values for LEDs incorporating:
         # past value, amplitude and angle
         pixels[index] = (( max(0, min(255, pixel[0] + round(amplitude * 255 *
-                           max(0, ((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           max(0, ((freq / 1000) - 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
                            
                            max(0, min(255, pixel[1] + round(amplitude * 255 *
-                           (1 - abs((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           (1 - abs((freq / 1000) - 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
                            
                            max(0, min(255, pixel[2] + round(amplitude * 255 *
-                           max(0, ((-2 * amplitude) + 1)) * (FAN_OUT - abs(n) +
+                           max(0, ((-freq / 1000) + 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
     
     # Display LED values calculated
@@ -208,15 +209,21 @@ while True:
             id = object['id']
             angle = object['angle']
             amplitude = object['amplitude']
-            
-            # Check id has increased (don't repeat same sound)
-            if id > last_id:
+    
+    # Import FFT data
+    fft = ast.literal_eval(open('/tmp/chinchilla-fft', 'r').read())
+    for k in fft['fft']:
+        if fft[k] > largest_amp:
+            freq = k
+    
+    # Check id has increased (don't repeat same sound)
+    if id > last_id:
                 
-                # Call LED ring code
-                led_ring(angle, amplitude)
+        # Call LED ring code 
+        led_ring(angle, amplitude, freq)
                 
-                # Update last id memory
-                last_id = id
+        # Update last id memory
+        last_id = id
     
     # Get current time in milliseconds
     now_ms = int(time.time() * 1000)
