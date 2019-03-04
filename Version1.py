@@ -6,6 +6,7 @@ import board
 import neopixel
 import json
 import digitalio
+import ast
 from math import pi
 
 # Definitions
@@ -34,52 +35,51 @@ button.pull = digitalio.Pull.UP
 # Declare memory between angles
 last_id = 0
 last_ms = 0
-last_button = 0
 
 # _____________________________________________________________________________
 # Loading animation on LEDs
 # _____________________________________________________________________________
 def load_screen():
-    
+
     # Clear all LEDs
     for n in range(0,NUM_PIXELS):
         pixels[n] = ((0, 0, 0))
     pixels.show()
-    
+
     # Make first and last LED white
     pixels[0] = ((255, 255, 255))
     pixels[NUM_PIXELS - 1] = ((255, 255, 255))
-    
+
     # Display LED values calculated
     pixels.show()
-    
+
     # Send white LED lit up round ring
     for n in range(1, int(NUM_PIXELS / 2)):
         time.sleep(0.1)
-        
+
         pixels[n - 1] = ((0, 0, 0))
         pixels[n] = ((255, 255, 255))
-        
+
         pixels[NUM_PIXELS - n] = ((0, 0, 0))
         pixels[NUM_PIXELS -1 - n] = ((255, 255, 255))
-        
+
         # Display LED values calculated
         pixels.show()
-    
+
     # Clear all LEDs
     for n in range(0,NUM_PIXELS):
         pixels[n] = ((0, 0, 0))
     pixels.show()
-    
+
     # Light up all LEDs in sequence
     for n in range(int(NUM_PIXELS / 2) - 1, -1, -1):
         time.sleep(0.1)
         pixels[n] = ((round(n * 255 / (int(NUM_PIXELS / 2) - 1)), n, round(255 - (n * 255 / (int(NUM_PIXELS / 2) - 1))) ))
         pixels[NUM_PIXELS -1 - n] = ((round(n * 255 / (int(NUM_PIXELS / 2) - 1)), n, round(255 - (n * 255 / (int(NUM_PIXELS / 2) - 1))) ))
-        
+
         # Display LED values calculated
         pixels.show()
-        
+
     time.sleep(1)
     # Clear all LEDs
     for n in range(0,NUM_PIXELS):
@@ -94,23 +94,23 @@ def calibrate():
     for n in range(0,NUM_PIXELS):
         pixels[n] = ((0, 0, 0))
     pixels.show()
-    
+
     # Make first LED white
     pixels[0] = ((255, 255, 255))
-    
+
     # Display LED values calculated
     pixels.show()
-    
+
     # Send white LED lit up round ring
     for n in range(1, NUM_PIXELS):
         time.sleep(0.1)
-        
+
         pixels[n - 1] = ((0, 0, 0))
         pixels[n] = ((255, 255, 255))
-        
+
         # Display LED values calculated
         pixels.show()
-    
+
     # Clear all LEDs
     for n in range(0,NUM_PIXELS):
         pixels[n] = ((0, 0, 0))
@@ -134,38 +134,39 @@ def sign(num):
 # Calculates LED RGB values based on angle and amplitude
 # Fades out as it goes round the ring up to the fanout value
 # _____________________________________________________________________________
-def led_ring(angle, amplitude):
-    
+def led_ring(angle, amplitude, freq):
+
     # Translate angle to LED number
     ring_pos = round((angle * NUM_PIXELS) / (2 * pi))
-    
+
     # Offset from Led number found above
     ring_offset = ((angle * NUM_PIXELS) / (2 * pi)) - ring_pos
-    
+
     # For loop stepping through FAN_OUT
     for n in range(1 - FAN_OUT, 1 + FAN_OUT):
-        
+
         # Calculate LED index based on angle
         index = ring_pos + (n * sign(ring_offset)) + (NUM_PIXELS *
                 sign(-ring_pos - (n * sign(ring_offset))))
-       
+
         # Extract current value of LED in question
         pixel = list(pixels[index])
 
         # Calculate RGB values for LEDs incorporating:
         # past value, amplitude and angle
+
         pixels[index] = (( max(0, min(255, pixel[0] + round(amplitude * 255 *
-                           max(0, ((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           max(0, ((freq / 500) - 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
-                           
+
                            max(0, min(255, pixel[1] + round(amplitude * 255 *
-                           (1 - abs((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           (1 - abs((freq / 500) - 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
-                           
+
                            max(0, min(255, pixel[2] + round(amplitude * 255 *
-                           max(0, ((-2 * amplitude) + 1)) * (FAN_OUT - abs(n) +
+                           max(0, ((-freq / 500) + 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
-   
+
     # Display LED values calculated
     pixels.show()
 
@@ -183,10 +184,10 @@ def led_ring(angle, amplitude):
 load_screen()
 
 while True:
-    
+
     # Fade all LEDs out by 1/3 each time
     for i in range(0, NUM_PIXELS):
-        
+
         # Convert from tuple to list for current LED
         pixel = list(pixels[i])
         if pixel[0] > 0:
@@ -195,10 +196,10 @@ while True:
             pixel[1] -= max(1, round(pixel[1]/3))
         if pixel[2] > 0:
             pixel[2] -= max(1, round(pixel[2]/3))
-            
+
         # Convert back from list to tuple for current LED
         pixels[i] = tuple(pixel)
-        
+
         # Display LED values calculated
         pixels.show()
 
@@ -208,35 +209,46 @@ while True:
             object = json.loads(line)
             id = object['id']
             angle = object['angle']
-            amplitude = object['amplitude']
-            
-            # Check id has increased (don't repeat same sound)
-            if id > last_id:
-                
-                # Call LED ring code
-                led_ring(angle, amplitude)
-                
-                # Update last id memory
-                last_id = id
-    
+            amplitude = object['amplitude'] / 2000000.0
+
+    # Import FFT data
+    try:
+        fft = ast.literal_eval(open('/tmp/chinchilla-fft', 'r').read())
+    except:
+        fft = None
+
+    if fft != None:
+        largest_amp = 0
+        for currfreq, ampl in fft['fft'].items():
+            if ampl > largest_amp:
+                freq = currfreq
+                largest_amp = ampl
+
+    else:
+        freq = 500
+    # Check id has increased (don't repeat same sound)
+    if id > last_id:
+
+        # Call LED ring code
+        led_ring(angle, amplitude, freq)
+
+        # Update last id memory
+        last_id = id
+
     # Get current time in milliseconds
     now_ms = int(time.time() * 1000)
-    
+
     # Get current button value
     button_value = not button.value
-    
+
     # Open file, write command and close
     f = open('/tmp/backend-ctl', 'w')
-    if (button_value and last_button == 0):
+    if (not button_value):
         last_ms = now_ms
-    if (button_value and now_ms > last_ms + 2000 and last_button == 1):
-        f.write('reset')
-    elif (button_value and now_ms > last_ms + 50 and last_button == 1):
+    if (button_value and now_ms > last_ms + 50):
         f.write('calibrate')
     f.close()
-    
-    if (button_value):
+
+    if (button_value and now_ms > last_ms + 50):
         calibrate()
-    
-    # Update last button memory
-    last_button = button_value
+
