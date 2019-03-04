@@ -135,11 +135,7 @@ def sign(num):
 # Fades out as it goes round the ring up to the fanout value
 # _____________________________________________________________________________
 def led_ring(angle, amplitude, freq):
-<<<<<<< HEAD:led_ctl.py
 
-=======
-    
->>>>>>> origin/master:Version1.py
     # Translate angle to LED number
     ring_pos = round((angle * NUM_PIXELS) / (2 * pi))
 
@@ -152,11 +148,7 @@ def led_ring(angle, amplitude, freq):
         # Calculate LED index based on angle
         index = ring_pos + (n * sign(ring_offset)) + (NUM_PIXELS *
                 sign(-ring_pos - (n * sign(ring_offset))))
-<<<<<<< HEAD:led_ctl.py
 
-=======
-        
->>>>>>> origin/master:Version1.py
         # Extract current value of LED in question
         pixel = list(pixels[index])
 
@@ -164,31 +156,17 @@ def led_ring(angle, amplitude, freq):
         # past value, amplitude and angle
 
         pixels[index] = (( max(0, min(255, pixel[0] + round(amplitude * 255 *
-<<<<<<< HEAD:led_ctl.py
                            max(0, ((freq / 500) - 1)) * (FAN_OUT - abs(n) +
-=======
-                           max(0, ((freq / 1000) - 1)) * (FAN_OUT - abs(n) +
->>>>>>> origin/master:Version1.py
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
 
                            max(0, min(255, pixel[1] + round(amplitude * 255 *
-<<<<<<< HEAD:led_ctl.py
                            (1 - abs((freq / 500) - 1)) * (FAN_OUT - abs(n) +
-=======
-                           (1 - abs((freq / 1000) - 1)) * (FAN_OUT - abs(n) +
->>>>>>> origin/master:Version1.py
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT ))),
 
                            max(0, min(255, pixel[2] + round(amplitude * 255 *
-<<<<<<< HEAD:led_ctl.py
                            max(0, ((-freq / 500) + 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
 
-=======
-                           max(0, ((-freq / 1000) + 1)) * (FAN_OUT - abs(n) +
-                           (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
-    
->>>>>>> origin/master:Version1.py
     # Display LED values calculated
     pixels.show()
 
@@ -231,7 +209,6 @@ while True:
             object = json.loads(line)
             id = object['id']
             angle = object['angle']
-<<<<<<< HEAD:led_ctl.py
             amplitude = object['amplitude'] / 2000000.0
 
     # Import FFT data
@@ -258,25 +235,6 @@ while True:
         # Update last id memory
         last_id = id
 
-=======
-            amplitude = object['amplitude']
-    
-    # Import FFT data
-    fft = ast.literal_eval(open('/tmp/chinchilla-fft', 'r').read())
-    for k in fft['fft']:
-        if fft[k] > largest_amp:
-            freq = k
-    
-    # Check id has increased (don't repeat same sound)
-    if id > last_id:
-                
-        # Call LED ring code 
-        led_ring(angle, amplitude, freq)
-                
-        # Update last id memory
-        last_id = id
-    
->>>>>>> origin/master:Version1.py
     # Get current time in milliseconds
     now_ms = int(time.time() * 1000)
 
@@ -290,13 +248,7 @@ while True:
     if (button_value and now_ms > last_ms + 50):
         f.write('calibrate')
     f.close()
-<<<<<<< HEAD:led_ctl.py
 
     if (button_value and now_ms > last_ms + 50):
         calibrate()
 
-=======
-    
-    if (button_value and now_ms > last_ms + 50):
-        calibrate()
->>>>>>> origin/master:Version1.py
