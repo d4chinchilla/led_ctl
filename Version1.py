@@ -19,41 +19,44 @@ NUM_PIXELS = 46
 # Setup button and declare as pull up input
 # Setup memory for remembering id, time and button state between loops
 # _____________________________________________________________________________
-def setup():
-    # LED setup
-    pixel_pin = board.D18
-    ORDER = neopixel.GRB
-    pixels = neopixel.NeoPixel(pixel_pin, NUM_PIXELS, brightness=1,
+
+# LED setup
+pixel_pin = board.D18
+ORDER = neopixel.GRB
+pixels = neopixel.NeoPixel(pixel_pin, NUM_PIXELS, brightness=1,
                                auto_write=False, pixel_order=ORDER)
 
-    # Button setup
-    button = digitalio.DigitalInOut(board.D4)
-    button.direction = digitalio.Direction.INPUT
-    button.pull = digitalio.Pull.UP
+# Button setup
+button = digitalio.DigitalInOut(board.D4)
+button.direction = digitalio.Direction.INPUT
+button.pull = digitalio.Pull.UP
 
-    # Declare memory between angles
-    last_id = 0
-    last_ms = 0
-    last_button = 0
+# Declare memory between angles
+last_id = 0
+last_ms = 0
+last_button = 0
 
 # _____________________________________________________________________________
 # Loading animation on LEDs
 # _____________________________________________________________________________
 def load_screen():
-	
-	# Clear all LEDs
-	pixels.fill((0, 0, 0))
+    
+    # Clear all LEDs
+    for n in range(0,NUM_PIXELS):
+        pixels[n] = ((0, 0, 0))
     pixels.show()
-	
-	# Make first and last LED white
-	pixels[0] = ((255, 255, 255))
-	pixels[NUM_PIXELS - 1] = ((255, 255, 255))
-	
-	# Display LED values calculated
+    
+    # Make first and last LED white
+    pixels[0] = ((255, 255, 255))
+    pixels[NUM_PIXELS - 1] = ((255, 255, 255))
+    
+    # Display LED values calculated
     pixels.show()
     
     # Send white LED lit up round ring
     for n in range(1, int(NUM_PIXELS / 2)):
+        time.sleep(0.1)
+        
         pixels[n - 1] = ((0, 0, 0))
         pixels[n] = ((255, 255, 255))
         
@@ -64,19 +67,53 @@ def load_screen():
         pixels.show()
     
     # Clear all LEDs
-	pixels.fill((0, 0, 0))
+    for n in range(0,NUM_PIXELS):
+        pixels[n] = ((0, 0, 0))
     pixels.show()
     
     # Light up all LEDs in sequence
     for n in range(int(NUM_PIXELS / 2) - 1, -1, -1):
-        pixels[n] = ((n * 255 / (int(NUM_PIXELS / 2) - 1), n, 255 - (n * 255 / (int(NUM_PIXELS / 2) - 1)) ))
-        pixels[NUM_PIXELS -1 - n] = ((n * 255 / (int(NUM_PIXELS / 2) - 1), n, 255 - (n * 255 / (int(NUM_PIXELS / 2) - 1)) ))
+        time.sleep(0.1)
+        pixels[n] = ((round(n * 255 / (int(NUM_PIXELS / 2) - 1)), n, round(255 - (n * 255 / (int(NUM_PIXELS / 2) - 1))) ))
+        pixels[NUM_PIXELS -1 - n] = ((round(n * 255 / (int(NUM_PIXELS / 2) - 1)), n, round(255 - (n * 255 / (int(NUM_PIXELS / 2) - 1))) ))
         
         # Display LED values calculated
         pixels.show()
         
+    time.sleep(1)
     # Clear all LEDs
-	pixels.fill((0, 0, 0))
+    for n in range(0,NUM_PIXELS):
+        pixels[n] = ((0, 0, 0))
+    pixels.show()
+
+# _____________________________________________________________________________
+# Calibration animation
+# _____________________________________________________________________________
+def calibrate():
+    # Clear all LEDs
+    for n in range(0,NUM_PIXELS):
+        pixels[n] = ((0, 0, 0))
+    pixels.show()
+    
+    # Make first LED white
+    pixels[0] = ((255, 255, 255))
+    
+    # Display LED values calculated
+    pixels.show()
+    
+    # Send white LED lit up round ring
+    for n in range(1, NUM_PIXELS):
+        time.sleep(0.1)
+        
+        pixels[n - 1] = ((0, 0, 0))
+        pixels[n] = ((255, 255, 255))
+        
+        # Display LED values calculated
+        pixels.show()
+    
+    # Clear all LEDs
+    for n in range(0,NUM_PIXELS):
+        pixels[n] = ((0, 0, 0))
     pixels.show()
 
 # _____________________________________________________________________________
@@ -142,7 +179,6 @@ def led_ring(angle, amplitude):
 # Sends a calibrate command if short button press
 # Sends a reset command if long button press
 # _____________________________________________________________________________
-setup()
 
 load_screen()
 
@@ -167,7 +203,7 @@ while True:
         pixels.show()
 
     # Open Json file and read id, angle and amplitude
-    with open('/tmp/chinchilla-backend.json', 'r') as json_file:
+    with open('/tmp/chinchilla-sounds', 'r') as json_file:
         for line in json_file.readlines():
             object = json.loads(line)
             id = object['id']
@@ -190,7 +226,7 @@ while True:
     button_value = not button.value
     
     # Open file, write command and close
-    f = open('/tmp/chinchilla-led-ctl', 'w')
+    f = open('/tmp/backend-ctl', 'w')
     if (button_value and last_button == 0):
         last_ms = now_ms
     if (button_value and now_ms > last_ms + 2000 and last_button == 1):
@@ -198,6 +234,9 @@ while True:
     elif (button_value and now_ms > last_ms + 50 and last_button == 1):
         f.write('calibrate')
     f.close()
+    
+    if (button_value):
+        calibrate()
     
     # Update last button memory
     last_button = button_value
