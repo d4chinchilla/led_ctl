@@ -34,7 +34,6 @@ button.pull = digitalio.Pull.UP
 # Declare memory between angles
 last_id = 0
 last_ms = 0
-last_button = 0
 
 # _____________________________________________________________________________
 # Loading animation on LEDs
@@ -103,7 +102,7 @@ def calibrate():
     
     # Send white LED lit up round ring
     for n in range(1, NUM_PIXELS):
-        time.sleep(0.2)
+        time.sleep(0.1)
         
         pixels[n - 1] = ((0, 0, 0))
         pixels[n] = ((255, 255, 255))
@@ -148,7 +147,7 @@ def led_ring(angle, amplitude):
         # Calculate LED index based on angle
         index = ring_pos + (n * sign(ring_offset)) + (NUM_PIXELS *
                 sign(-ring_pos - (n * sign(ring_offset))))
-       
+        
         # Extract current value of LED in question
         pixel = list(pixels[index])
 
@@ -165,7 +164,7 @@ def led_ring(angle, amplitude):
                            max(0, min(255, pixel[2] + round(amplitude * 255 *
                            max(0, ((-2 * amplitude) + 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
-   
+    
     # Display LED values calculated
     pixels.show()
 
@@ -227,16 +226,11 @@ while True:
     
     # Open file, write command and close
     f = open('/tmp/backend-ctl', 'w')
-    if (button_value and last_button == 0):
+    if (not button_value):
         last_ms = now_ms
-    if (button_value and now_ms > last_ms + 2000 and last_button == 1):
-        f.write('reset')
-    elif (button_value and now_ms > last_ms + 50 and last_button == 1):
+    if (button_value and now_ms > last_ms + 50):
         f.write('calibrate')
     f.close()
     
-    if (button_value):
+    if (button_value and now_ms > last_ms + 50):
         calibrate()
-    
-    # Update last button memory
-    last_button = button_value
