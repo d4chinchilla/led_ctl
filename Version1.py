@@ -103,7 +103,7 @@ def calibrate():
     
     # Send white LED lit up round ring
     for n in range(1, NUM_PIXELS):
-        time.sleep(0.1)
+        time.sleep(0.2)
         
         pixels[n - 1] = ((0, 0, 0))
         pixels[n] = ((255, 255, 255))
