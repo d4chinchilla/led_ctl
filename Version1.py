@@ -1,14 +1,4 @@
 # Based on example by Adafruit and using Adafruit libraries
- 
-# _____________________________________________________________________________
-# Setup
-#
-# Import libraries
-# Setup LEDs for Adafruit library
-# Setup button and declare as pull up input
-# Setup memory for remembering id, time and button state between loops
-# Declare the fanout round the LED ring
-# _____________________________________________________________________________
 
 # imports
 import time
@@ -18,25 +8,76 @@ import json
 import digitalio
 from math import pi
 
-# LED setup
-pixel_pin = board.D18
-num_pixels = 46
-ORDER = neopixel.GRB
-pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=1,
-                           auto_write=False, pixel_order=ORDER)
+# Definitions
+FAN_OUT = 3
+NUM_PIXELS = 46
 
-# Button setup
-button = digitalio.DigitalInOut(board.D4)
-button.direction = digitalio.Direction.INPUT
-button.pull = digitalio.Pull.UP
+# _____________________________________________________________________________
+# Setup
+#
+# Setup LEDs for Adafruit library
+# Setup button and declare as pull up input
+# Setup memory for remembering id, time and button state between loops
+# _____________________________________________________________________________
+def setup():
+    # LED setup
+    pixel_pin = board.D18
+    ORDER = neopixel.GRB
+    pixels = neopixel.NeoPixel(pixel_pin, NUM_PIXELS, brightness=1,
+                               auto_write=False, pixel_order=ORDER)
 
-# Declare memory between angles
-last_id = 0
-last_ms = 0
-last_button = 0
+    # Button setup
+    button = digitalio.DigitalInOut(board.D4)
+    button.direction = digitalio.Direction.INPUT
+    button.pull = digitalio.Pull.UP
 
-# Declare fanout
-fan_out = 3
+    # Declare memory between angles
+    last_id = 0
+    last_ms = 0
+    last_button = 0
+
+# _____________________________________________________________________________
+# Loading animation on LEDs
+# _____________________________________________________________________________
+def load_screen():
+	
+	# Clear all LEDs
+	pixels.fill((0, 0, 0))
+    pixels.show()
+	
+	# Make first and last LED white
+	pixels[0] = ((255, 255, 255))
+	pixels[NUM_PIXELS - 1] = ((255, 255, 255))
+	
+	# Display LED values calculated
+    pixels.show()
+    
+    # Send white LED lit up round ring
+    for n in range(1, int(NUM_PIXELS / 2)):
+        pixels[n - 1] = ((0, 0, 0))
+        pixels[n] = ((255, 255, 255))
+        
+        pixels[NUM_PIXELS - n] = ((0, 0, 0))
+        pixels[NUM_PIXELS -1 - n] = ((255, 255, 255))
+        
+        # Display LED values calculated
+        pixels.show()
+    
+    # Clear all LEDs
+	pixels.fill((0, 0, 0))
+    pixels.show()
+    
+    # Light up all LEDs in sequence
+    for n in range(int(NUM_PIXELS / 2) - 1, -1, -1):
+        pixels[n] = ((n * 255 / (int(NUM_PIXELS / 2) - 1), n, 255 - (n * 255 / (int(NUM_PIXELS / 2) - 1)) ))
+        pixels[NUM_PIXELS -1 - n] = ((n * 255 / (int(NUM_PIXELS / 2) - 1), n, 255 - (n * 255 / (int(NUM_PIXELS / 2) - 1)) ))
+        
+        # Display LED values calculated
+        pixels.show()
+        
+    # Clear all LEDs
+	pixels.fill((0, 0, 0))
+    pixels.show()
 
 # _____________________________________________________________________________
 # Sign function
@@ -59,16 +100,16 @@ def sign(num):
 def led_ring(angle, amplitude):
     
     # Translate angle to LED number
-    ring_pos = round((angle * num_pixels) / (2 * pi))
+    ring_pos = round((angle * NUM_PIXELS) / (2 * pi))
     
     # Offset from Led number found above
-    ring_offset = ((angle * num_pixels) / (2 * pi)) - ring_pos
+    ring_offset = ((angle * NUM_PIXELS) / (2 * pi)) - ring_pos
     
-    # For loop stepping through fan_out
-    for n in range(1 - fan_out, 1 + fan_out):
+    # For loop stepping through FAN_OUT
+    for n in range(1 - FAN_OUT, 1 + FAN_OUT):
         
         # Calculate LED index based on angle
-        index = ring_pos + (n * sign(ring_offset)) + (num_pixels *
+        index = ring_pos + (n * sign(ring_offset)) + (NUM_PIXELS *
                 cmp(-ring_pos - (n * sign(ring_offset)), 0))
         
         # Extract current value of LED in question
@@ -77,32 +118,38 @@ def led_ring(angle, amplitude):
         # Calculate RGB values for LEDs incorporating:
         # past value, amplitude and angle
         pixels[index] = (( min(255, pixel[0] + round(amplitude * 255 *
-                           max(0, ((2 * amplitude) - 1)) * (fan_out - abs(n) +
-                           (abs(ring_offset) * sign(n)) ) / fan_out )),
+                           max(0, ((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           (abs(ring_offset) * sign(n)) ) / FAN_OUT )),
                            
                            min(255, pixel[1] + round(amplitude * 255 *
-                           (1 - abs((2 * amplitude) - 1)) * (fan_out - abs(n) +
-                           (abs(ring_offset) * sign(n)) ) / fan_out )),
+                           (1 - abs((2 * amplitude) - 1)) * (FAN_OUT - abs(n) +
+                           (abs(ring_offset) * sign(n)) ) / FAN_OUT )),
                            
                            min(255, pixel[2] + round(amplitude * 255 *
-                           max(0, ((-2 * amplitude) + 1)) * (fan_out - abs(n) +
-                           (abs(ring_offset) * sign(n)) ) / fan_out )) ))
+                           max(0, ((-2 * amplitude) + 1)) * (FAN_OUT - abs(n) +
+                           (abs(ring_offset) * sign(n)) ) / FAN_OUT )) ))
     
     # Display LED values calculated
     pixels.show()
 
 # _____________________________________________________________________________
-# Main loop
+# Main Code
+#
+# Call setup
 # Imports angle and amplitude value from json file, and triggers LED ring code
 # Fades the LED values by 1/3 each loop
 # Reads button value
 # Sends a calibrate command if short button press
 # Sends a reset command if long button press
 # _____________________________________________________________________________
+setup()
+
+load_screen()
+
 while True:
     
     # Fade all LEDs out by 1/3 each time
-    for i in range(0, num_pixels):
+    for i in range(0, NUM_PIXELS):
         
         # Convert from tuple to list for current LED
         pixel = list(pixels[i])
