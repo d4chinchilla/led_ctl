@@ -148,7 +148,7 @@ def led_ring(angle, amplitude):
         # Calculate LED index based on angle
         index = ring_pos + (n * sign(ring_offset)) + (NUM_PIXELS *
                 sign(-ring_pos - (n * sign(ring_offset))))
-        
+       
         # Extract current value of LED in question
         pixel = list(pixels[index])
 
@@ -165,7 +165,7 @@ def led_ring(angle, amplitude):
                            max(0, min(255, pixel[2] + round(amplitude * 255 *
                            max(0, ((-2 * amplitude) + 1)) * (FAN_OUT - abs(n) +
                            (abs(ring_offset) * sign(n)) ) / FAN_OUT )) )))
-    
+   
     # Display LED values calculated
     pixels.show()
 
