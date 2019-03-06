@@ -71,7 +71,7 @@ def load_screen():
         pixels[n] = ((0, 0, 0))
     pixels.show()
 
-    # Light up all LEDs in sequence
+    # Light up all LEDs in sequence with colours that range from orange to purple
     for n in range(int(NUM_PIXELS / 2) - 1, -1, -1):
         time.sleep(0.1)
         pixels[n] = ((round(n * 255 / (int(NUM_PIXELS / 2) - 1)), n, round(255 - (n * 255 / (int(NUM_PIXELS / 2) - 1))) ))
@@ -81,6 +81,7 @@ def load_screen():
         pixels.show()
 
     time.sleep(1)
+
     # Clear all LEDs
     for n in range(0,NUM_PIXELS):
         pixels[n] = ((0, 0, 0))
@@ -216,16 +217,19 @@ while True:
         fft = ast.literal_eval(open('/tmp/chinchilla-fft', 'r').read())
     except:
         fft = None
-
+    
+    # Check for frequency with largest amplitude and use that
     if fft != None:
         largest_amp = 0
         for currfreq, ampl in fft['fft'].items():
             if ampl > largest_amp:
                 freq = currfreq
                 largest_amp = ampl
-
+    
+    # Or default frequency of 500
     else:
         freq = 500
+        
     # Check id has increased (don't repeat same sound)
     if id > last_id:
 
@@ -241,14 +245,15 @@ while True:
     # Get current button value
     button_value = not button.value
 
-    # Open file, write command and close
+    # Open file, write command and close if button press is greater than 50ms (debounce)
     f = open('/tmp/backend-ctl', 'w')
     if (not button_value):
         last_ms = now_ms
     if (button_value and now_ms > last_ms + 50):
         f.write('calibrate')
     f.close()
-
+    
+    # Trigger calibration animation
     if (button_value and now_ms > last_ms + 50):
         calibrate()
 
